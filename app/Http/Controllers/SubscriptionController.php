@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Laravel\Cashier\Exceptions\IncompletePayment;
 
 class SubscriptionController extends Controller
 {
@@ -11,7 +12,11 @@ class SubscriptionController extends Controller
    */
   public function index()
   {
-    return view('subscription');
+    /** @var User $user */
+    $user = auth()->user();
+    return view('subscription', [
+      'intent' => $user->createSetupIntent()
+    ]);
   }
 
   /**
@@ -27,18 +32,32 @@ class SubscriptionController extends Controller
    */
   public function store(Request $request)
   {
-    return $request->user()
-      ->newSubscription(request('plan'), request('price_id'))
-      // ->trialDays(5)
-      ->allowPromotionCodes()
-      ->checkout([
-        'success_url' => route('subscription.success'),
-        'cancel_url' => route('subscription.cancelled'),
-        'metadata' => [
-          'plan' => request('plan'),
-          'price_id' => request('price_id')
-        ],
-      ]);
+    try {
+      $request->user()->newSubscription(
+        $request->plan,
+        $request->price_id
+      )->create($request->payment_method);
+
+      return redirect()->route('subscription.success');
+    } catch (IncompletePayment $exception) {
+      return redirect()->route(
+        'cashier.payment',
+        [$exception->payment->id, 'redirect' => route('home')]
+      );
+    }
+
+    // return $request->user()
+    //   ->newSubscription(request('plan'), request('price_id'))
+    //   // ->trialDays(5)
+    //   ->allowPromotionCodes()
+    //   ->checkout([
+    //     'success_url' => route('subscription.success'),
+    //     'cancel_url' => route('subscription.cancelled'),
+    //     'metadata' => [
+    //       'plan' => request('plan'),
+    //       'price_id' => request('price_id')
+    //     ],
+    //   ]);
   }
 
   public function success()

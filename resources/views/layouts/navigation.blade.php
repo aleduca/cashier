@@ -20,7 +20,7 @@
             {{ __('Buy Product') }}
           </x-nav-link>
 
-          <x-nav-link :href="route('subscription')" :active="request()->routeIs('subscription')">
+          <x-nav-link :href="route('subscription.index')" :active="request()->routeIs('subscription.index')">
             {{ __('Subscription') }}
           </x-nav-link>
         </div>
