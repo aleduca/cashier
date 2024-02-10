@@ -15,7 +15,9 @@ class SubscriptionController extends Controller
     /** @var User $user */
     $user = auth()->user();
     return view('subscription', [
-      'intent' => $user->createSetupIntent()
+      'intent' => $user->createSetupIntent([
+        'payment_method_types' => ['card', 'boleto']
+      ])
     ]);
   }
 
@@ -33,13 +35,25 @@ class SubscriptionController extends Controller
   public function store(Request $request)
   {
     try {
-      $request->user()->newSubscription(
+      /** @var User $user */
+      $user = $request->user();
+      $user->newSubscription(
         $request->plan,
         $request->price_id
-      )->create($request->payment_method);
+      )
+        ->create($request->payment_method, subscriptionOptions: [
+          'metadata' => [
+            'plan' => $request->plan,
+            'price_id' => $request->price_id
+          ]
+        ]);
 
       return redirect()->route('subscription.success');
     } catch (IncompletePayment $exception) {
+      dd($exception);
+      if ($exception->payment->status === 'requires_action' && $exception->payment->next_action->type === 'boleto_display_details') {
+        dd($exception->payment->next_action->boleto_display_details->pdf);
+      }
       return redirect()->route(
         'cashier.payment',
         [$exception->payment->id, 'redirect' => route('home')]
