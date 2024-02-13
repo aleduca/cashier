@@ -12,6 +12,7 @@ Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook']);
 
 require __DIR__ . '/sale.php';
 require __DIR__ . '/subscription.php';
+require __DIR__ . '/invoices.php';
 
 Route::get('/dashboard', function () {
   return view('dashboard');

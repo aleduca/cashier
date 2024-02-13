@@ -23,6 +23,10 @@
           <x-nav-link :href="route('subscription.index')" :active="request()->routeIs('subscription.index')">
             {{ __('Subscription') }}
           </x-nav-link>
+
+          <x-nav-link :href="route('invoice.create')" :active="request()->routeIs('invoice.create')">
+            {{ __('Invoice') }}
+          </x-nav-link>
         </div>
       </div>
 
